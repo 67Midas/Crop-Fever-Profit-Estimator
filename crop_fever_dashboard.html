@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Crop Fever ROI — SkyBlock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:        #070b10;
+    --panel:     #0d1520;
+    --panel2:    #111d2e;
+    --border:    #1a2d45;
+    --accent:    #00e5ff;
+    --accent2:   #7c3aed;
+    --gold:      #f59e0b;
+    --text:      #cdd9ed;
+    --muted:     #4a6080;
+    --lv1: #22d3ee;
+    --lv2: #86efac;
+    --lv3: #fbbf24;
+    --lv4: #f97316;
+    --lv5: #e879f9;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 1.5rem 4rem;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 2rem;
+    padding: 2.5rem 0 2rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+  }
+
+  .title-block {}
+  .eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 18px;
+    height: 1px;
+    background: var(--accent);
+  }
+  .title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.4rem, 5vw, 4.2rem);
+    line-height: 0.95;
+    letter-spacing: 0.02em;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 60%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .tagline {
+    margin-top: 0.6rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ── CONTROLS ── */
+  .controls-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.2rem;
+    align-items: flex-end;
+    margin-bottom: 2rem;
+    padding: 1.4rem 1.6rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+
+  .ctrl {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 140px;
+  }
+
+  .ctrl label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+  }
+
+  .ctrl select {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a6080' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    background-size: 10px;
+    padding-right: 2rem;
+  }
+  .ctrl select:focus { border-color: var(--accent); }
+
+  .bps-ctrl { min-width: 220px; }
+  .bps-row {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  .bps-row input[type=range] {
+    flex: 1;
+    accent-color: var(--accent);
+    cursor: pointer;
+    height: 4px;
+  }
+  .bps-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 4ch;
+    text-align: right;
+  }
+  .bps-limits {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .ctrl-divider {
+    width: 1px;
+    height: 48px;
+    background: var(--border);
+    align-self: flex-end;
+    margin: 0 0.2rem;
+  }
+
+  /* ── KPI ROW ── */
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  @media (max-width: 900px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 500px) { .kpis { grid-template-columns: 1fr; } }
+
+  .kpi {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.3rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .kpi:hover { border-color: var(--accent); }
+  .kpi::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .kpi:nth-child(1)::after { background: linear-gradient(90deg, var(--accent), transparent); }
+  .kpi:nth-child(2)::after { background: linear-gradient(90deg, var(--gold), transparent); }
+  .kpi:nth-child(3)::after { background: linear-gradient(90deg, #86efac, transparent); }
+  .kpi:nth-child(4)::after { background: linear-gradient(90deg, var(--accent2), transparent); }
+
+  .kpi-icon {
+    font-size: 1.4rem;
+    margin-bottom: 0.6rem;
+    display: block;
+  }
+  .kpi-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 0.3rem;
+  }
+  .kpi-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    color: var(--text);
+  }
+  .kpi-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 0.35rem;
+  }
+
+  /* ── CHARTS GRID ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    grid-template-rows: auto auto;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+
+  .chart-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem;
+    transition: border-color 0.2s;
+  }
+  .chart-panel:hover { border-color: var(--border); }
+  .chart-panel.span2 { grid-column: span 2; }
+  @media (max-width: 900px) { .chart-panel.span2 { grid-column: span 1; } }
+
+  .panel-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 1.1rem;
+  }
+  .panel-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+  }
+  .panel-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--accent);
+    background: rgba(0,229,255,0.08);
+    border: 1px solid rgba(0,229,255,0.2);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  canvas { width: 100% !important; }
+
+  /* ── TABLE ── */
+  .table-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+  .table-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .table-scroll { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  thead th {
+    padding: 0.7rem 1rem;
+    text-align: left;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    background: var(--panel2);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  thead th:hover { color: var(--accent); }
+  thead th.sorted { color: var(--accent); }
+  thead th.sorted::after { content: ' ↑'; }
+  thead th.sorted.desc::after { content: ' ↓'; }
+  thead th:not(:first-child) { text-align: right; }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(0,229,255,0.04); }
+  tbody tr.selected { background: rgba(0,229,255,0.07); border-left: 3px solid var(--accent); }
+
+  td {
+    padding: 0.75rem 1rem;
+    color: var(--text);
+  }
+  td:not(:first-child) {
+    text-align: right;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+  }
+  td.crop-cell { font-weight: 600; }
+  td.muted-val { color: var(--muted); }
+
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 4px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 0 0;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="title-block">
+      <div class="eyebrow">Hypixel SkyBlock · Farming</div>
+      <div class="title">Crop Fever<br>ROI Calculator</div>
+      <div class="tagline">// investment analysis · all levels · all crops</div>
+    </div>
+    <div class="live-badge">
+      <span class="live-dot"></span>
+      Live Estimates
+    </div>
+  </header>
+
+  <!-- CONTROLS -->
+  <div class="controls-bar">
+    <div class="ctrl bps-ctrl">
+      <label>Blocks / Second — <span id="bpsDisplay">19.5</span></label>
+      <div class="bps-row">
+        <input type="range" id="bpsRange" min="0" max="20" step="0.5" value="19.5" />
+        <span class="bps-val" id="bpsVal">19.5</span>
+      </div>
+      <div class="bps-limits"><span>0</span><span>20 bps</span></div>
+    </div>
+
+    <div class="ctrl-divider"></div>
+
+    <div class="ctrl">
+      <label>Crop Fever Level</label>
+      <select id="levelSel">
+        <option value="0">All Levels</option>
+        <option value="1">Level 1</option>
+        <option value="2">Level 2</option>
+        <option value="3">Level 3</option>
+        <option value="4">Level 4</option>
+        <option value="5" selected>Level 5</option>
+      </select>
+    </div>
+
+    <div class="ctrl">
+      <label>Filter Crop</label>
+      <select id="cropSel">
+        <option value="">All Crops</option>
+      </select>
+    </div>
+
+    <div class="ctrl">
+      <label>Sort By</label>
+      <select id="metricSel">
+        <option value="roiHours">ROI (hours)</option>
+        <option value="profitPerHour">Profit / hr</option>
+        <option value="upgradeCost">Upgrade Cost</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi">
+      <span class="kpi-icon">🏆</span>
+      <div class="kpi-label">Best ROI Crop</div>
+      <div class="kpi-value" id="kpiBestCrop">—</div>
+      <div class="kpi-sub" id="kpiBestSub"></div>
+    </div>
+    <div class="kpi">
+      <span class="kpi-icon">💰</span>
+      <div class="kpi-label">Top Profit / hr</div>
+      <div class="kpi-value" id="kpiTopProfit">—</div>
+      <div class="kpi-sub" id="kpiTopProfitSub"></div>
+    </div>
+    <div class="kpi">
+      <span class="kpi-icon">⏱️</span>
+      <div class="kpi-label">Avg ROI (hrs)</div>
+      <div class="kpi-value" id="kpiAvgROI">—</div>
+      <div class="kpi-sub" id="kpiAvgSub">at selected level</div>
+    </div>
+    <div class="kpi">
+      <span class="kpi-icon">⚡</span>
+      <div class="kpi-label">Blocks / Hour</div>
+      <div class="kpi-value" id="kpiBph">—</div>
+      <div class="kpi-sub">at current BPS</div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="charts-grid">
+    <div class="chart-panel">
+      <div class="panel-header">
+        <div class="panel-title">Extra Profit / Hour by Crop</div>
+        <div class="panel-tag">per level</div>
+      </div>
+      <canvas id="profitChart" height="260"></canvas>
+    </div>
+
+    <div class="chart-panel">
+      <div class="panel-header">
+        <div class="panel-title">ROI Ranking</div>
+        <div class="panel-tag" id="roiChartTag">Lv 5</div>
+      </div>
+      <canvas id="roiChart" height="260"></canvas>
+    </div>
+
+    <div class="chart-panel span2">
+      <div class="panel-header">
+        <div class="panel-title">Level Progression</div>
+        <div class="panel-tag" id="levelChartTag">click a crop row</div>
+      </div>
+      <canvas id="levelChart" height="190"></canvas>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-panel">
+    <div class="table-panel-header">
+      <div class="panel-title" style="font-family:'Space Mono',monospace;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted)">
+        All Results — <span id="rowCount">0</span> rows
+      </div>
+      <div class="panel-tag">click row to inspect level curve</div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th data-col="cropName">Crop</th>
+            <th data-col="level">Level</th>
+            <th data-col="upgradeCost">Upgrade Cost</th>
+            <th data-col="profitPerHour">Profit / hr</th>
+            <th data-col="roiHours" class="sorted">ROI (hours)</th>
+            <th data-col="roiDays">ROI (days)</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    <p>⚠ ROI figures are long-run expectations. The "PRAY TO RNGESUS" drop tier introduces high variance — short sessions will deviate significantly.</p>
+    <p>Rare-crop bonus uses a flat +15% spawn-chance during active Crop Fever windows. Rarefinder chip and Rose Dragon bonuses are not included.</p>
+    <p style="margin-top:0.8rem;color:var(--border)">Source: Hypixel SkyBlock Wiki · Prices: NPC (bazaar integration available via Python backend)</p>
+  </footer>
+
+</div>
+
+<script>
+// ============================================================
+// GAME DATA (mirrors calculator.py)
+// ============================================================
+const ONCE  = 160;
+const TWICE = 25600;
+const CF_DURATION_S = 60;
+const RARE_CF_BONUS = 0.15;
+
+const CROP_NAMES = {
+  "MELON":        "Melon",
+  "PUMPKIN":      "Pumpkin",
+  "CACTUS":       "Cactus",
+  "INK_SACK:3":   "Cocoa Beans",
+  "CARROT_ITEM":  "Carrot",
+  "WHEAT":        "Wheat",
+  "SUGAR_CANE":   "Sugar Cane",
+  "NETHER_STALK": "Nether Wart",
+  "POTATO_ITEM":  "Potato",
+  "RED_MUSHROOM": "Mushroom",
+  "MOONFLOWER":   "Moonflower",
+  "WILD_ROSE":    "Wild Rose",
+  "DOUBLE_PLANT": "Sunflower",
+};
+
+const NPC_PRICES = {
+  "MELON":3, "PUMPKIN":10, "CACTUS":4, "INK_SACK:3":3,
+  "CARROT_ITEM":3, "WHEAT":6, "SUGAR_CANE":4, "NETHER_STALK":4,
+  "POTATO_ITEM":3, "RED_MUSHROOM":10, "MOONFLOWER":4, "WILD_ROSE":4, "DOUBLE_PLANT":4,
+};
+
+const RARE_NPC = { SQUASH:75000, HELIANTHUS:275000, CROPIE:25000, FERMENTO:250000 };
+const RARE_CHANCE = { SQUASH:0.0003, HELIANTHUS:0.00004, CROPIE:0.0005, FERMENTO:0.00007 };
+const CROP_RARE = {
+  "MELON":"SQUASH","PUMPKIN":"SQUASH","CACTUS":"FERMENTO","INK_SACK:3":"SQUASH",
+  "CARROT_ITEM":"CROPIE","WHEAT":"CROPIE","SUGAR_CANE":"FERMENTO","NETHER_STALK":"FERMENTO",
+  "POTATO_ITEM":"CROPIE","RED_MUSHROOM":"FERMENTO","MOONFLOWER":"HELIANTHUS",
+  "WILD_ROSE":"HELIANTHUS","DOUBLE_PLANT":"HELIANTHUS",
+};
+
+const CF_DROPS = {
+  "MELON":       {NONE:1, UNCOMMON:24*ONCE, RARE:48*ONCE, "CRAZY RARE":4*TWICE, "PRAY TO RNGESUS":12*TWICE},
+  "PUMPKIN":     {NONE:1, UNCOMMON:6*ONCE, RARE:12*ONCE, "CRAZY RARE":110*ONCE, "PRAY TO RNGESUS":4*TWICE},
+  "CACTUS":      {NONE:1, UNCOMMON:6*ONCE, RARE:18*ONCE, "CRAZY RARE":1*TWICE, "PRAY TO RNGESUS":6*TWICE},
+  "INK_SACK:3":  {NONE:1, UNCOMMON:6*ONCE, RARE:12*ONCE, "CRAZY RARE":120*ONCE, "PRAY TO RNGESUS":4*TWICE},
+  "CARROT_ITEM": {NONE:1, UNCOMMON:18*ONCE, RARE:42*ONCE, "CRAZY RARE":4*TWICE, "PRAY TO RNGESUS":12*TWICE},
+  "WHEAT":       {NONE:1, UNCOMMON:6*ONCE, RARE:10*ONCE, "CRAZY RARE":120*ONCE, "PRAY TO RNGESUS":12*TWICE},
+  "SUGAR_CANE":  {NONE:1, UNCOMMON:12*ONCE, RARE:24*ONCE, "CRAZY RARE":1*TWICE, "PRAY TO RNGESUS":6*TWICE},
+  "NETHER_STALK":{NONE:1, UNCOMMON:18*ONCE, RARE:36*ONCE, "CRAZY RARE":2*TWICE, "PRAY TO RNGESUS":6*TWICE},
+  "POTATO_ITEM": {NONE:1, UNCOMMON:18*ONCE, RARE:32*ONCE, "CRAZY RARE":2*TWICE, "PRAY TO RNGESUS":6*TWICE},
+  "RED_MUSHROOM":{NONE:1, UNCOMMON:6*ONCE, RARE:12*ONCE, "CRAZY RARE":120*ONCE, "PRAY TO RNGESUS":16*TWICE},
+  "MOONFLOWER":  {NONE:1, UNCOMMON:12*ONCE, RARE:24*ONCE, "CRAZY RARE":2*TWICE, "PRAY TO RNGESUS":6*TWICE},
+  "WILD_ROSE":   {NONE:1, UNCOMMON:12*ONCE, RARE:24*ONCE, "CRAZY RARE":2*TWICE, "PRAY TO RNGESUS":6*TWICE},
+  "DOUBLE_PLANT":{NONE:1, UNCOMMON:12*ONCE, RARE:24*ONCE, "CRAZY RARE":2*TWICE, "PRAY TO RNGESUS":6*TWICE},
+};
+
+const TOTAL_WEIGHT = 20138;
+const CF_CHANCES = {
+  NONE:             20000/TOTAL_WEIGHT,
+  UNCOMMON:             90/TOTAL_WEIGHT,
+  RARE:                 40/TOTAL_WEIGHT,
+  "CRAZY RARE":          7/TOTAL_WEIGHT,
+  "PRAY TO RNGESUS":     1/TOTAL_WEIGHT,
+};
+
+const CF_ACTIVATION = {1:0.00001, 2:0.00002, 3:0.00003, 4:0.00004, 5:0.00005};
+
+const MFC = 102400; // _COMPACTED_MOONFLOWER_COST
+const UPGRADE_COSTS = {1:MFC*16, 2:MFC*32, 3:MFC*64, 4:MFC*128, 5:MFC*256};
+
+const LV_COLORS = {
+  1: '#22d3ee', 2: '#86efac', 3: '#fbbf24', 4: '#f97316', 5: '#e879f9'
+};
+
+// ============================================================
+// CALCULATOR
+// ============================================================
+function calcProfit(cropId, bps) {
+  const rareType  = CROP_RARE[cropId];
+  const price     = NPC_PRICES[cropId];
+  const rareChance = RARE_CHANCE[rareType];
+
+  const rareProfitPerBlock = RARE_NPC[rareType] * RARE_CF_BONUS * rareChance;
+
+  let cfProfit = 0;
+  for (const [tier, chance] of Object.entries(CF_CHANCES)) {
+    const drop = CF_DROPS[cropId][tier] || 0;
+    cfProfit += drop * chance * price;
+  }
+
+  const blocksPerWindow = bps * CF_DURATION_S;
+  return (rareProfitPerBlock + cfProfit) * blocksPerWindow;
+}
+
+function calculate(cropId, level, bps) {
+  const activationChance = CF_ACTIVATION[level];
+  const profitPerActivation = calcProfit(cropId, bps);
+  const blocksPerHour = bps * 3600;
+  const activationsPerHour = blocksPerHour * activationChance;
+  const extraProfitPerHour = activationsPerHour * profitPerActivation;
+  const upgradeCost = UPGRADE_COSTS[level];
+  const roiHours = extraProfitPerHour > 0 ? upgradeCost / extraProfitPerHour : Infinity;
+  return {
+    cropId,
+    cropName: CROP_NAMES[cropId],
+    level,
+    upgradeCost,
+    profitPerHour: Math.round(extraProfitPerHour * 100) / 100,
+    roiHours: Math.round(roiHours * 100) / 100,
+    roiDays: Math.round((roiHours / 24) * 1000) / 1000,
+  };
+}
+
+function calculateAll(bps) {
+  const results = [];
+  for (const cropId of Object.keys(NPC_PRICES)) {
+    for (let lvl = 1; lvl <= 5; lvl++) {
+      results.push(calculate(cropId, lvl, bps));
+    }
+  }
+  return results;
+}
+
+// ============================================================
+// FORMATTING
+// ============================================================
+const fmtCoins = n => {
+  if (!isFinite(n)) return '∞';
+  if (n >= 1e9) return (n/1e9).toFixed(2)+'B';
+  if (n >= 1e6) return (n/1e6).toFixed(2)+'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1)+'K';
+  return Math.round(n).toLocaleString();
+};
+const fmt = (n, dp=0) => isFinite(n)
+  ? n.toLocaleString('en-US', {minimumFractionDigits:dp, maximumFractionDigits:dp})
+  : '∞';
+
+// ============================================================
+// STATE
+// ============================================================
+let sortCol = 'roiHours', sortAsc = true;
+let selectedCrop = null;
+let charts = {};
+
+function getBps()   { return parseFloat(document.getElementById('bpsRange').value); }
+function getLevel() { return parseInt(document.getElementById('levelSel').value) || 0; }
+function getCrop()  { return document.getElementById('cropSel').value || ''; }
+function getMetric(){ return document.getElementById('metricSel').value; }
+
+function getData() { return calculateAll(getBps()); }
+
+// ============================================================
+// POPULATE CROP FILTER
+// ============================================================
+(function populateCrops() {
+  const sel = document.getElementById('cropSel');
+  for (const [id, name] of Object.entries(CROP_NAMES)) {
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  }
+})();
+
+// ============================================================
+// FILTERED DATA
+// ============================================================
+function filtered(data) {
+  let rows = data;
+  const lvl = getLevel();
+  const crop = getCrop();
+  if (lvl) rows = rows.filter(r => r.level === lvl);
+  if (crop) rows = rows.filter(r => r.cropId === crop);
+  return rows;
+}
+
+function filteredAtLevel(data, lvl) {
+  return data.filter(r => r.level === lvl);
+}
+
+// ============================================================
+// KPIs
+// ============================================================
+function updateKpis(data) {
+  const bps = getBps();
+  const lvl = getLevel() || 5;
+  const rows = filteredAtLevel(data, lvl);
+  const best = rows.reduce((a,b) => a.roiHours < b.roiHours ? a : b, rows[0]);
+  const top  = rows.reduce((a,b) => a.profitPerHour > b.profitPerHour ? a : b, rows[0]);
+  const avgRoi = rows.reduce((s,r) => s + r.roiHours, 0) / rows.length;
+
+  document.getElementById('kpiBestCrop').textContent = best ? best.cropName : '—';
+  document.getElementById('kpiBestSub').textContent  = best ? `ROI: ${best.roiHours.toFixed(1)} hrs` : '';
+  document.getElementById('kpiTopProfit').textContent = top ? fmtCoins(top.profitPerHour) : '—';
+  document.getElementById('kpiTopProfitSub').textContent = top ? top.cropName : '';
+  document.getElementById('kpiAvgROI').textContent = isFinite(avgRoi) ? avgRoi.toFixed(1) : '∞';
+  document.getElementById('kpiAvgSub').textContent = `avg at level ${lvl}`;
+  document.getElementById('kpiBph').textContent = Math.round(bps * 3600).toLocaleString();
+}
+
+// ============================================================
+// CHART: PROFIT BARS (all crops, all levels)
+// ============================================================
+function buildProfitChart(data) {
+  const cropIds = Object.keys(NPC_PRICES);
+  const labels  = cropIds.map(c => CROP_NAMES[c]);
+  const datasets = [1,2,3,4,5].map(lvl => ({
+    label: `Lv ${lvl}`,
+    backgroundColor: LV_COLORS[lvl] + 'bb',
+    borderColor: LV_COLORS[lvl],
+    borderWidth: 1,
+    borderRadius: 3,
+    data: cropIds.map(c => {
+      const r = data.find(x => x.cropId === c && x.level === lvl);
+      return r ? Math.round(r.profitPerHour) : 0;
+    }),
+  }));
+
+  const ctx = document.getElementById('profitChart').getContext('2d');
+  if (charts.profit) charts.profit.destroy();
+  charts.profit = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      plugins: { legend: { labels: { color: '#94a3b8', font: { family: 'Space Mono', size: 10 } } } },
+      scales: {
+        x: { ticks: { color: '#4a6080', font: { family: 'Space Mono', size: 9 }, maxRotation: 35 }, grid: { color: '#1a2d45' } },
+        y: { ticks: { color: '#4a6080', font: { family: 'Space Mono', size: 9 }, callback: v => fmtCoins(v) }, grid: { color: '#1a2d45' } },
+      },
+      responsive: true,
+      animation: { duration: 250 },
+    },
+  });
+}
+
+// ============================================================
+// CHART: ROI HORIZONTAL BAR
+// ============================================================
+function buildRoiChart(data) {
+  const lvl  = getLevel() || 5;
+  const rows = filteredAtLevel(data, lvl).sort((a,b) => a.roiHours - b.roiHours);
+  document.getElementById('roiChartTag').textContent = `Level ${lvl}`;
+
+  const ctx = document.getElementById('roiChart').getContext('2d');
+  if (charts.roi) charts.roi.destroy();
+  charts.roi = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: rows.map(r => r.cropName),
+      datasets: [{
+        label: 'ROI (hours)',
+        backgroundColor: rows.map(r => LV_COLORS[r.level] + 'bb'),
+        borderColor:      rows.map(r => LV_COLORS[r.level]),
+        borderWidth: 1,
+        borderRadius: 4,
+        data: rows.map(r => isFinite(r.roiHours) ? +r.roiHours.toFixed(1) : 0),
+      }],
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#4a6080', font: { family: 'Space Mono', size: 9 } }, grid: { color: '#1a2d45' } },
+        y: { ticks: { color: '#94a3b8', font: { family: 'Space Mono', size: 9 } }, grid: { color: '#1a2d45' } },
+      },
+      responsive: true,
+      animation: { duration: 250 },
+    },
+  });
+}
+
+// ============================================================
+// CHART: LEVEL PROGRESSION for selected crop
+// ============================================================
+function buildLevelChart(data, cropId) {
+  const crop = cropId || selectedCrop || Object.keys(NPC_PRICES)[0];
+  selectedCrop = crop;
+  document.getElementById('levelChartTag').textContent = CROP_NAMES[crop] || crop;
+
+  const rows = [1,2,3,4,5].map(lvl => data.find(r => r.cropId === crop && r.level === lvl));
+
+  const ctx = document.getElementById('levelChart').getContext('2d');
+  if (charts.level) charts.level.destroy();
+  charts.level = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Lv 1', 'Lv 2', 'Lv 3', 'Lv 4', 'Lv 5'],
+      datasets: [
+        {
+          label: 'ROI (hours)',
+          borderColor: '#00e5ff',
+          backgroundColor: '#00e5ff18',
+          pointBackgroundColor: '#00e5ff',
+          pointRadius: 5,
+          fill: true,
+          tension: 0.35,
+          data: rows.map(r => r && isFinite(r.roiHours) ? +r.roiHours.toFixed(1) : null),
+        },
+        {
+          label: 'Profit / hr (÷1000)',
+          borderColor: '#e879f9',
+          backgroundColor: '#e879f918',
+          pointBackgroundColor: '#e879f9',
+          pointRadius: 5,
+          fill: true,
+          tension: 0.35,
+          yAxisID: 'y2',
+          data: rows.map(r => r ? Math.round(r.profitPerHour / 1000) : null),
+        },
+      ],
+    },
+    options: {
+      plugins: {
+        legend: { labels: { color: '#94a3b8', font: { family: 'Space Mono', size: 10 } } },
+      },
+      scales: {
+        x:  { ticks: { color: '#4a6080', font: { family: 'Space Mono', size: 10 } }, grid: { color: '#1a2d45' } },
+        y:  { ticks: { color: '#4a6080', font: { family: 'Space Mono', size: 10 } }, grid: { color: '#1a2d45' } },
+        y2: { position: 'right', ticks: { color: '#e879f9', font: { family: 'Space Mono', size: 10 } }, grid: { drawOnChartArea: false } },
+      },
+      responsive: true,
+      animation: { duration: 250 },
+    },
+  });
+
+  // highlight selected row in table
+  document.querySelectorAll('#tableBody tr').forEach(tr => {
+    tr.classList.toggle('selected', tr.dataset.crop === crop);
+  });
+}
+
+// ============================================================
+// TABLE
+// ============================================================
+function renderTable(data) {
+  const rows = filtered(data).sort((a, b) => {
+    const va = a[sortCol], vb = b[sortCol];
+    return typeof va === 'string'
+      ? (sortAsc ? va.localeCompare(vb) : vb.localeCompare(va))
+      : (sortAsc ? va - vb : vb - va);
+  });
+
+  document.getElementById('rowCount').textContent = rows.length;
+
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = rows.map(r => `
+    <tr data-crop="${r.cropId}">
+      <td class="crop-cell">${r.cropName}</td>
+      <td><span class="badge" style="background:${LV_COLORS[r.level]}22;color:${LV_COLORS[r.level]};border:1px solid ${LV_COLORS[r.level]}55">Lv ${r.level}</span></td>
+      <td>${fmtCoins(r.upgradeCost)}</td>
+      <td>${fmtCoins(r.profitPerHour)}</td>
+      <td>${isFinite(r.roiHours) ? r.roiHours.toFixed(1) : '∞'}</td>
+      <td class="muted-val">${isFinite(r.roiDays) ? r.roiDays.toFixed(2) : '∞'}</td>
+    </tr>
+  `).join('');
+
+  tbody.querySelectorAll('tr').forEach(tr => {
+    tr.addEventListener('click', () => buildLevelChart(getData(), tr.dataset.crop));
+  });
+}
+
+// ============================================================
+// SORT HEADERS
+// ============================================================
+document.querySelectorAll('thead th[data-col]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    if (sortCol === col) sortAsc = !sortAsc;
+    else { sortCol = col; sortAsc = true; }
+    document.querySelectorAll('thead th').forEach(t => {
+      t.classList.remove('sorted','desc');
+    });
+    th.classList.add('sorted');
+    if (!sortAsc) th.classList.add('desc');
+    renderTable(getData());
+  });
+});
+
+// ============================================================
+// REFRESH
+// ============================================================
+function refresh() {
+  const data = getData();
+  updateKpis(data);
+  buildProfitChart(data);
+  buildRoiChart(data);
+  renderTable(data);
+  buildLevelChart(data, selectedCrop);
+}
+
+// ============================================================
+// EVENTS
+// ============================================================
+document.getElementById('bpsRange').addEventListener('input', () => {
+  const v = getBps();
+  document.getElementById('bpsVal').textContent = v;
+  document.getElementById('bpsDisplay').textContent = v;
+  refresh();
+});
+
+['levelSel','cropSel','metricSel'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => {
+    if (id === 'metricSel') { sortCol = getMetric(); sortAsc = true; }
+    refresh();
+  });
+});
+
+// ============================================================
+// INIT
+// ============================================================
+refresh();
+</script>
+</body>
+</html>
