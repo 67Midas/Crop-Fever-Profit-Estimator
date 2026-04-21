@@ -41,10 +41,18 @@ def _get(url: str) -> dict[str, Any]:
 # Public helpers
 # ---------------------------------------------------------------------------
 
-def fetch_bazaar() -> dict[str, Any]:
-    """Return the full bazaar payload from the Hypixel API."""
-    log.info("Fetching bazaar data...")
-    return _get(BAZAAR_URL)
+
+def fetch_bazaar(item_ids: list[str] | None = None) -> dict[str, Any]:
+    """
+    Return the (optionally filtered) bazaar payload from the Hypixel API.
+    If item_ids is provided, only those products are included in the result.
+    """
+    log.info("Fetching bazaar data%s...", f" for {item_ids}" if item_ids else "")
+    data = _get(BAZAAR_URL)
+    if item_ids is not None:
+        filtered_products = {k: v for k, v in data.get("products", {}).items() if k in item_ids}
+        data["products"] = filtered_products
+    return data
 
 
 def fetch_items() -> dict[str, Any]:
@@ -92,3 +100,12 @@ def get_bazaar_buy_price(product_id: str) -> float | None:
     except (HypixelAPIError, KeyError) as exc:
         log.warning("Could not fetch bazaar price for %r: %s", product_id, exc)
         return None
+
+
+def save_debug_json(data: dict[str, Any], filename: str) -> None:
+    """
+    Save the given data as a JSON file in the current directory for debugging purposes.
+    """
+    debug_path = Path(__file__).parent / filename
+    with debug_path.open("w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)

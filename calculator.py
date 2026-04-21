@@ -184,19 +184,23 @@ def get_effective_sell_prices() -> dict[str, float]:
     effective: dict[str, float] = dict(NPC_SELL_PRICES)  # start from NPC baseline
 
     try:
-        data = api_client.fetch_bazaar()
+        item_ids = get_relevant_item_ids()
+        data = api_client.fetch_bazaar(item_ids)
+        #api_client.save_debug_json(data, "bazaar_debug.json")  # for debugging / future analysis
         for crop_id, npc_price in NPC_SELL_PRICES.items():
             try:
                 bazaar_sell = data["products"][crop_id]["quick_status"]["sellPrice"]
-                # Note: the bazaar prices are usually always worse than NPC sell prices - I'd wager it's because of the low demand
-                # Crops have very few uses outside of Helianthus Armor & visitors (with the exception of carrots for pet candy)
-                # I'm also using the average sell prices over the week to avoid getting inflated results due to market manipulation
                 if bazaar_sell > npc_price:
                     log.info(
                         "%s: using bazaar sell price %.4f (NPC: %.2f)",
                         crop_id, bazaar_sell, npc_price,
                     )
                     effective[crop_id] = bazaar_sell
+                else:
+                    log.debug(
+                        "%s: bazaar sell price %.4f not better than NPC %.2f; using NPC",
+                        crop_id, bazaar_sell, npc_price,
+                    )
             except KeyError:
                 pass  # crop not listed on bazaar; NPC price stays
     except api_client.HypixelAPIError as exc:
@@ -313,3 +317,9 @@ def calculate_all(
                 calculate(crop_id, level, blocks_per_second, hypercharge_bonus, effective_sell_prices)
             )
     return results
+
+# Helper to get all relevant item IDs for bazaar fetch
+def get_relevant_item_ids() -> list[str]:
+    # Union of CROP_NICKNAMES and RARE_CROP_NPC_SELL_PRICES keys
+    ids = set(CROP_NICKNAMES.keys()) | set(RARE_CROP_NPC_SELL_PRICES.keys())
+    return list(ids)
