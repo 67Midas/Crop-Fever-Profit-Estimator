@@ -21,6 +21,8 @@ import api_client
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
+logging.getLogger("PIL").setLevel(logging.WARNING)
 
 # ---------------------------------------------------------------------------
 # Constants

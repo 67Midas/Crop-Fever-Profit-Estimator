@@ -15,6 +15,7 @@ import argparse
 import sys
 import webbrowser
 from pathlib import Path
+import matplotlib.pyplot as plt
 
 import calculator
 from visualiser import build_dashboard
@@ -57,6 +58,7 @@ def print_table(results: list[calculator.CropFeverResult], level: int | None = N
 # ---------------------------------------------------------------------------
 
 def parse_args() -> argparse.Namespace:
+
     parser = argparse.ArgumentParser(
         description="Hypixel SkyBlock – Crop Fever ROI Calculator",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -107,6 +109,11 @@ def parse_args() -> argparse.Namespace:
         metavar="FILE",
         help="Output path for the HTML dashboard (only used with --html)",
     )
+    parser.add_argument(
+        "--plot",
+        action="store_true",
+        help="Show a matplotlib plot of ROI (hours) vs crop for all levels",
+    )
     return parser.parse_args()
 
 
@@ -131,6 +138,31 @@ def main() -> None:
             sys.exit(1)
 
     print_table(results, level=args.level)
+
+
+    if args.plot:
+        # Prepare data for plotting
+        crops = sorted(set(r.crop_id for r in results))
+        levels = sorted(set(r.level for r in results))
+        crop_to_idx = {crop: i for i, crop in enumerate(crops)}
+        fig, ax = plt.subplots(figsize=(12, 6))
+        for level in levels:
+            xs = []
+            ys = []
+            for crop in crops:
+                for r in results:
+                    if r.crop_id == crop and r.level == level:
+                        xs.append(crop)
+                        ys.append(r.roi_hours)
+                        break
+            ax.plot(xs, ys, marker="o", label=f"Level {level}")
+        ax.set_xlabel("Crop")
+        ax.set_ylabel("ROI (hours)")
+        ax.set_title("Crop Fever ROI (hours) by Crop and Level")
+        ax.legend()
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.show()
 
     if args.html:
         html = build_dashboard(results)
