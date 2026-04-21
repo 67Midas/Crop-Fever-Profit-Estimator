@@ -71,7 +71,7 @@ def get_npc_sell_prices(item_ids: list[str]) -> dict[str, float]:
         data = fetch_items()
     except HypixelAPIError as exc:
         log.warning("Live API unavailable (%s); falling back to cache.", exc)
-        cache_path = Path(__file__).parent / "testItemData.json"
+        cache_path = Path(__file__).parent / "bazaar_debug.json"
         if not cache_path.exists():
             raise FileNotFoundError(
                 "No cached item data found and the live API is unreachable."
