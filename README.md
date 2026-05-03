@@ -1,3 +1,6 @@
+NOTE: As of the Harvest Feast update and the new Overbloom stat, this project is outdated
+I will add support for the new harvest feast crops/seasonings soon (meaning, before galatea part 2 is released)
+
 # 🌾 Crop Fever ROI Calculator
 
 A data-driven Python tool that models the return-on-investment timeline for
